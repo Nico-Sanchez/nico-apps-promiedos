@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#00875a">
+    <title>Promiedos</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            min-height: 100vh;
+            color: #fff;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #00875a, #006644);
+            padding: 20px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header h1 {
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .tabs {
+            display: flex;
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+            margin: 15px auto 0;
+            max-width: 400px;
+            padding: 4px;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: none;
+            color: rgba(255,255,255,0.7);
+            font-size: 0.9rem;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            background: rgba(255,255,255,0.2);
+            color: #fff;
+            font-weight: 600;
+        }
+        
+        .content { padding: 20px; }
+        
+        .league-section {
+            margin-bottom: 25px;
+        }
+        
+        .league-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+        }
+        
+        .league-header img {
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+        }
+        
+        .league-header h2 {
+            font-size: 1rem;
+            font-weight: 500;
+        }
+        
+        .match-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 3px solid #00875a;
+        }
+        
+        .match-card.live {
+            border-left-color: #ff4444;
+            background: rgba(255,68,68,0.1);
+        }
+        
+        .match-time {
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .match-time .live-badge {
+            background: #ff4444;
+            color: #fff;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.65rem;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        
+        .match-teams {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .team {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .team.away { flex-direction: row-reverse; text-align: right; }
+        
+        .team-logo {
+            width: 32px;
+            height: 32px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+        
+        .team-name {
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .score {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #00ff88;
+            min-width: 70px;
+            text-align: center;
+        }
+        
+        .score.pending { color: rgba(255,255,255,0.5); font-size: 1rem; }
+        
+        /* Posiciones */
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        .standings {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        
+        .standings th {
+            text-align: left;
+            padding: 12px 8px;
+            color: rgba(255,255,255,0.5);
+            font-weight: 500;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .standings th:first-child { width: 30px; text-align: center; }
+        
+        .standings td {
+            padding: 12px 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .standings tr:nth-child(-n+4) td:first-child {
+            color: #00ff88;
+            font-weight: bold;
+        }
+        
+        .standings tr:nth-last-child(-n+2) td:first-child {
+            color: #ff4444;
+        }
+        
+        .team-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .team-row .team-logo { width: 24px; height: 24px; font-size: 0.9rem; }
+        
+        .standings .pts { font-weight: bold; color: #00ff88; }
+        
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: rgba(255,255,255,0.5);
+        }
+        
+        .empty-state span { font-size: 4rem; display: block; margin-bottom: 15px; }
+        
+        /* Pull to refresh indicator */
+        .refresh-hint {
+            text-align: center;
+            padding: 10px;
+            color: rgba(255,255,255,0.3);
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>⚽ Promiedos</h1>
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('partidos')">Partidos</button>
+            <button class="tab" onclick="showTab('posiciones')">Posiciones</button>
+        </div>
+    </div>
+    
+    <div class="content">
+        <div class="refresh-hint">Tirá hacia abajo para actualizar</div>
+        
+        <div id="partidos">
+            <div class="league-section">
+                <div class="league-header">
+                    <div style="font-size: 1.5rem;">🇦🇷</div>
+                    <h2>Liga Profesional Argentina</h2>
+                </div>
+                
+                <div class="match-card live">
+                    <div class="match-time">
+                        <span class="live-badge">EN VIVO</span>
+                        67'
+                    </div>
+                    <div class="match-teams">
+                        <div class="team">
+                            <div class="team-logo">🔴</div>
+                            <span class="team-name">Independiente</span>
+                        </div>
+                        <div class="score">2 - 1</div>
+                        <div class="team away">
+                            <div class="team-logo">🔵</div>
+                            <span class="team-name">Racing</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="match-card">
+                    <div class="match-time">Hoy 19:00</div>
+                    <div class="match-teams">
+                        <div class="team">
+                            <div class="team-logo">💛</div>
+                            <span class="team-name">Boca Juniors</span>
+                        </div>
+                        <div class="score pending">vs</div>
+                        <div class="team away">
+                            <div class="team-logo">⚪</div>
+                            <span class="team-name">River Plate</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="match-card">
+                    <div class="match-time">Mañana 15:30</div>
+                    <div class="match-teams">
+                        <div class="team">
+                            <div class="team-logo">🟣</div>
+                            <span class="team-name">San Lorenzo</span>
+                        </div>
+                        <div class="score pending">vs</div>
+                        <div class="team away">
+                            <div class="team-logo">🟡</div>
+                            <span class="team-name">Vélez</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="match-card">
+                    <div class="match-time">Finalizado</div>
+                    <div class="match-teams">
+                        <div class="team">
+                            <div class="team-logo">🔵</div>
+                            <span class="team-name">Talleres</span>
+                        </div>
+                        <div class="score">0 - 0</div>
+                        <div class="team away">
+                            <div class="team-logo">⬜</div>
+                            <span class="team-name">Estudiantes</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="league-section">
+                <div class="league-header">
+                    <div style="font-size: 1.5rem;">🏆</div>
+                    <h2>Copa Libertadores</h2>
+                </div>
+                
+                <div class="match-card">
+                    <div class="match-time">Miércoles 21:30</div>
+                    <div class="match-teams">
+                        <div class="team">
+                            <div class="team-logo">⚪</div>
+                            <span class="team-name">River Plate</span>
+                        </div>
+                        <div class="score pending">vs</div>
+                        <div class="team away">
+                            <div class="team-logo">🇧🇷</div>
+                            <span class="team-name">Flamengo</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="posiciones" style="display: none;">
+            <div class="league-section">
+                <div class="league-header">
+                    <div style="font-size: 1.5rem;">🇦🇷</div>
+                    <h2>Liga Profesional Argentina</h2>
+                </div>
+                
+                <div class="table-container">
+                    <table class="standings">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Equipo</th>
+                                <th>PJ</th>
+                                <th>G</th>
+                                <th>E</th>
+                                <th>P</th>
+                                <th>DG</th>
+                                <th class="pts">Pts</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1</td>
+                                <td><div class="team-row"><div class="team-logo">🔴</div>Independiente</div></td>
+                                <td>15</td>
+                                <td>10</td>
+                                <td>3</td>
+                                <td>2</td>
+                                <td>+12</td>
+                                <td class="pts">33</td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td><div class="team-row"><div class="team-logo">⚪</div>River Plate</div></td>
+                                <td>15</td>
+                                <td>9</td>
+                                <td>4</td>
+                                <td>2</td>
+                                <td>+10</td>
+                                <td class="pts">31</td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td><div class="team-row"><div class="team-logo">💛</div>Boca Juniors</div></td>
+                                <td>15</td>
+                                <td>9</td>
+                                <td>3</td>
+                                <td>3</td>
+                                <td>+8</td>
+                                <td class="pts">30</td>
+                            </tr>
+                            <tr>
+                                <td>4</td>
+                                <td><div class="team-row"><div class="team-logo">🔵</div>Racing</div></td>
+                                <td>15</td>
+                                <td>8</td>
+                                <td>5</td>
+                                <td>2</td>
+                                <td>+7</td>
+                                <td class="pts">29</td>
+                            </tr>
+                            <tr>
+                                <td>5</td>
+                                <td><div class="team-row"><div class="team-logo">🔵</div>Talleres</div></td>
+                                <td>15</td>
+                                <td>7</td>
+                                <td>5</td>
+                                <td>3</td>
+                                <td>+5</td>
+                                <td class="pts">26</td>
+                            </tr>
+                            <tr>
+                                <td>6</td>
+                                <td><div class="team-row"><div class="team-logo">🟣</div>San Lorenzo</div></td>
+                                <td>15</td>
+                                <td>6</td>
+                                <td>6</td>
+                                <td>3</td>
+                                <td>+3</td>
+                                <td class="pts">24</td>
+                            </tr>
+                            <tr>
+                                <td>7</td>
+                                <td><div class="team-row"><div class="team-logo">🟡</div>Vélez</div></td>
+                                <td>15</td>
+                                <td>6</td>
+                                <td>5</td>
+                                <td>4</td>
+                                <td>+2</td>
+                                <td class="pts">23</td>
+                            </tr>
+                            <tr>
+                                <td>8</td>
+                                <td><div class="team-row"><div class="team-logo">⬜</div>Estudiantes</div></td>
+                                <td>15</td>
+                                <td>5</td>
+                                <td>6</td>
+                                <td>4</td>
+                                <td>+1</td>
+                                <td class="pts">21</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            document.getElementById('partidos').style.display = tab === 'partidos' ? 'block' : 'none';
+            document.getElementById('posiciones').style.display = tab === 'posiciones' ? 'block' : 'none';
+        }
+        
+        // Simular pull-to-refresh
+        let startY = 0;
+        document.addEventListener('touchstart', e => startY = e.touches[0].clientY);
+        document.addEventListener('touchend', e => {
+            const endY = e.changedTouches[0].clientY;
+            if (window.scrollY === 0 && endY - startY > 100) {
+                location.reload();
+            }
+        });
+        
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+    </script>
+</body>
+</html>
